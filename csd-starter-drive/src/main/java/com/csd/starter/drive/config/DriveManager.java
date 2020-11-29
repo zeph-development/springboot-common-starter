@@ -1,5 +1,7 @@
 package com.csd.starter.drive.config;
 
+import com.csd.starter.drive.error.GeneralSecurityAppException;
+import com.csd.starter.drive.error.InputOutputException;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.batch.BatchRequest;
@@ -16,10 +18,8 @@ import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 import com.google.api.services.drive.model.Permission;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -30,11 +30,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.csd.starter.drive.model.properties.DriveProperties.*;
 import static java.lang.String.format;
 import static java.util.Objects.isNull;
 
 @Slf4j
+@Component
 public class DriveManager {
 
     private DriveConfig driveConfig;
@@ -45,44 +45,36 @@ public class DriveManager {
 
     private static Credential credential;
 
-    @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnProperty
     private synchronized Credential getCredential() {
         try {
             if (isNull(credential)) {
-                java.io.File credentialsFile = new java.io.File(format("/%s", driveConfig.getProperty(CREDENTIALS_FILE_NAME)));
+                java.io.File credentialsFile = new java.io.File(format("/%s", driveConfig.CREDENTIALS_FILE_NAME));
                 InputStream is = new FileInputStream(credentialsFile);
                 credential = GoogleCredential.fromStream(is)
                         .createScoped(Collections.singleton(DriveScopes.DRIVE));
             }
         } catch (IOException e) {
-            //throw new InputOutputException(e.getMessage());
+            log.debug(e.getMessage());
+            throw new InputOutputException(e.getMessage());
         }
         return credential;
     }
 
-    @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnProperty
     private Drive service() {
         try {
             return new Drive.Builder(
                     GoogleNetHttpTransport.newTrustedTransport(),
                     JacksonFactory.getDefaultInstance(), getCredential())
-                    .setApplicationName(driveConfig.getProperty(APP_NAME)).build();
+                    .setApplicationName(driveConfig.APP_NAME).build();
         } catch (GeneralSecurityException e) {
-            //throw new GeneralSecurityAppException(e.getMessage());
-            throw new RuntimeException(e.getMessage());
+            log.debug(e.getMessage());
+            throw new GeneralSecurityAppException(e.getMessage());
         } catch (IOException e) {
-            //throw new InputOutputException(e.getMessage());
-            throw new RuntimeException(e.getMessage());
+            log.debug(e.getMessage());
+            throw new InputOutputException(e.getMessage());
         }
     }
 
-    @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnProperty
     public List<File> searchFiles(String query) {
         List<File> files = new ArrayList<>();
         String pageToken = null;
@@ -99,31 +91,28 @@ public class DriveManager {
                 pageToken = result.getNextPageToken();
             } while (pageToken != null);
         } catch (IOException e) {
-            //throw new InputOutputException(e.getMessage());
+            log.debug(e.getMessage());
+            throw new InputOutputException(e.getMessage());
         }
         return files;
     }
 
-    @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnProperty
     protected File searchFileById(String fileId) {
         File file = null;
         try {
             file = service().files().get(fileId).execute();
         } catch (HttpResponseException e) {
+            log.debug(e.getMessage());
             if (e.getStatusCode() == HttpStatus.NOT_FOUND.value()) {
                 return null;
             }
         } catch (IOException e) {
-            //throw new InputOutputException(e.getMessage());
+            log.debug(e.getMessage());
+            throw new InputOutputException(e.getMessage());
         }
         return file;
     }
 
-    @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnProperty
     protected File uploadFile(List<String> parentFoldersIds, java.io.File file, String fileType, String fileName) {
         File uploadedFile;
         try {
@@ -137,15 +126,12 @@ public class DriveManager {
             log.info("Uploaded file with name {} and id {}", uploadedFile.getName(), uploadedFile.getId());
         } catch (IOException e) {
             String errorMessage = format("Fail uploading file %s because %s", file.getName(), e.getMessage());
-            //throw new InputOutputException(errorMessage);
-            throw new RuntimeException(e.getMessage());
+            log.debug(e.getMessage());
+            throw new InputOutputException(errorMessage);
         }
         return uploadedFile;
     }
 
-    @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnProperty
     protected File createFolder(List<String> parentFoldersIds, String folderName) {
         File createdFolder;
         try {
@@ -158,15 +144,12 @@ public class DriveManager {
                     .execute();
             log.info("Create folder with name {} and id {}", createdFolder.getName(), createdFolder.getId());
         } catch (IOException e) {
-            //throw new InputOutputException(e.getMessage());
-            throw new RuntimeException(e.getMessage());
+            log.debug(e.getMessage());
+            throw new InputOutputException(e.getMessage());
         }
         return createdFolder;
     }
 
-    @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnProperty
     public byte[] downloadFile(String fileId) {
         ByteArrayOutputStream outputStream;
         try {
@@ -174,28 +157,25 @@ public class DriveManager {
             service().files().get(fileId).executeMediaAndDownloadTo(outputStream);
             log.info("Downloaded file with id {}", fileId);
         } catch (IOException e) {
-            //throw new InputOutputException(e.getMessage());
-            throw new RuntimeException(e.getMessage());
+            log.debug(e.getMessage());
+            throw new InputOutputException(e.getMessage());
         }
         return outputStream.toByteArray();
     }
 
-    @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnProperty
     protected void deleteFile(String fileId) {
         try {
             service().files().delete(fileId).execute();
             log.info("Deleted file with id {}", fileId);
         } catch (IOException e) {
-            //throw new InputOutputException(e.getMessage());
-            throw new RuntimeException(e.getMessage());
+            log.debug(e.getMessage());
+            throw new InputOutputException(e.getMessage());
         }
     }
 
-    @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnProperty
+    /* @Bean
+     @ConditionalOnMissingBean
+     @ConditionalOnProperty*/
     public void shareFile(String fileId, String userEmail) {
         try {
             JsonBatchCallback<Permission> callback = new JsonBatchCallback<Permission>() {
@@ -213,16 +193,16 @@ public class DriveManager {
             };
             BatchRequest batch = service().batch();
             Permission userPermission = new Permission()
-                    .setType(driveConfig.getProperty(USER_TYPE))
-                    .setRole(driveConfig.getProperty(USER_ROLE))
+                    .setType(driveConfig.USER_TYPE)
+                    .setRole(driveConfig.USER_ROLE)
                     .setEmailAddress(userEmail);
             service().permissions().create(fileId, userPermission)
                     .setFields("id")
                     .queue(batch, callback);
             batch.execute();
         } catch (IOException e) {
-            //throw new InputOutputException(e.getMessage());
-            throw new RuntimeException(e.getMessage());
+            log.debug(e.getMessage());
+            throw new InputOutputException(e.getMessage());
         }
     }
 }

@@ -1,0 +1,7 @@
+drive.action.startup.clean=${DRIVE_CLEAN:true}
+drive.action.startup.share-root-again=${DRIVE_SHARE_ROOT_AGAIN:false}
+drive.root.name=root-posting
+drive.file.credentials=${DRIVE_CREDENTIALS_PATH}
+drive.file.cars=batch.xlsx
+
+app.user.emails=${USER_EMAILS}

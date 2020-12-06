@@ -1,6 +1,8 @@
-package com.csd.starter.drive.model.properties;
+package com.csd.starter.drive.config;
 
-public class DriveProperties {
+public class DriveManagerConfigParams {
+
+    private DriveManagerConfigParams () {}
 
     public static final String USER_TYPE = "user.type";
     public static final String USER_ROLE = "user.role";

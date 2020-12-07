@@ -20,9 +20,6 @@ import com.google.api.services.drive.model.FileList;
 import com.google.api.services.drive.model.Permission;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
 
 import java.io.ByteArrayOutputStream;
@@ -46,9 +43,6 @@ public class DriveManager {
 
     private static Credential credential;
 
-    @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnProperty
     private synchronized Credential getCredential() {
         try {
             if (isNull(credential)) {
@@ -64,9 +58,6 @@ public class DriveManager {
         return credential;
     }
 
-    @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnProperty
     private Drive service() {
         try {
             return new Drive.Builder(
@@ -82,9 +73,6 @@ public class DriveManager {
         }
     }
 
-    @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnProperty
     public List<File> searchFiles(String query) {
         List<File> files = new ArrayList<>();
         String pageToken = null;
@@ -107,9 +95,6 @@ public class DriveManager {
         return files;
     }
 
-    @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnProperty
     protected File searchFileById(String fileId) {
         File file = null;
         try {
@@ -125,9 +110,6 @@ public class DriveManager {
         return file;
     }
 
-    @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnProperty
     protected File uploadFile(List<String> parentFoldersIds, java.io.File file, String fileType, String fileName) {
         File uploadedFile;
         try {
@@ -147,9 +129,6 @@ public class DriveManager {
         return uploadedFile;
     }
 
-    @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnProperty
     protected File createFolder(List<String> parentFoldersIds, String folderName) {
         File createdFolder;
         try {
@@ -168,9 +147,6 @@ public class DriveManager {
         return createdFolder;
     }
 
-    @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnProperty
     public byte[] downloadFile(String fileId) {
         ByteArrayOutputStream outputStream;
         try {
@@ -184,9 +160,6 @@ public class DriveManager {
         return outputStream.toByteArray();
     }
 
-    @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnProperty
     protected void deleteFile(String fileId) {
         try {
             service().files().delete(fileId).execute();
@@ -197,9 +170,6 @@ public class DriveManager {
         }
     }
 
-    @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnProperty
     public void shareFile(String fileId, String userEmail) {
         try {
             JsonBatchCallback<Permission> callback = new JsonBatchCallback<Permission>() {

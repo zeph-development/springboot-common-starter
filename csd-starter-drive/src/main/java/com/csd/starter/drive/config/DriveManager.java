@@ -18,6 +18,7 @@ import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 import com.google.api.services.drive.model.Permission;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -38,13 +39,10 @@ import static java.lang.String.format;
 import static java.util.Objects.isNull;
 
 @Slf4j
+@RequiredArgsConstructor
 public class DriveManager {
 
     private final DriveManagerConfig driveConfig;
-
-    public DriveManager(DriveManagerConfig driveConfig) {
-        this.driveConfig = driveConfig;
-    }
 
     private static Credential credential;
 

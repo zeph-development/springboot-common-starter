@@ -15,8 +15,6 @@ import static com.csd.starter.drive.config.DriveManagerConfigParams.*;
 @EnableConfigurationProperties(DriveManagerProperties.class)
 public class DriveManagerAutoConfiguration {
 
-
-    //@Autowired
     private final DriveManagerProperties driveManagerProperties;
 
     public DriveManagerAutoConfiguration (DriveManagerProperties driveManagerProperties) {

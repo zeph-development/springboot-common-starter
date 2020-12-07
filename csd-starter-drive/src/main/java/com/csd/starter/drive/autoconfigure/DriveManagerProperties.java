@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Getter
 @Setter
-@ConfigurationProperties(prefix = "csd.drive.manager")
+@ConfigurationProperties(prefix = "drive")
 public class DriveManagerProperties {
 
     private String userType;

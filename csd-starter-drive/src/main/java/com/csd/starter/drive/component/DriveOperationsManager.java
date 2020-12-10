@@ -1,5 +1,14 @@
-package com.csd.starter.drive.config;
+package com.csd.starter.drive.component;
 
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.GeneralSecurityException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import com.csd.starter.drive.model.prop.Properties;
 import com.csd.starter.drive.error.GeneralSecurityAppException;
 import com.csd.starter.drive.error.InputOutputException;
 import com.csd.starter.drive.util.DriveFileType;
@@ -18,42 +27,30 @@ import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 import com.google.api.services.drive.model.Permission;
+import org.springframework.http.HttpStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.GeneralSecurityException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import static com.csd.starter.drive.config.DriveManagerConfigParams.*;
 import static java.lang.String.format;
 import static java.util.Objects.isNull;
 
 @Slf4j
 @RequiredArgsConstructor
-public class DriveManager {
+public class DriveOperationsManager {
 
-    private final DriveManagerConfig driveConfig;
-
+    private final Properties prop;
     private static Credential credential;
 
     private synchronized Credential getCredential() {
         try {
             if (isNull(credential)) {
-                java.io.File credentialsFile = new java.io.File(format("/%s", driveConfig.getProperty(CREDENTIALS_FILE_NAME)));
+                java.io.File credentialsFile = new java.io.File(format("/%s", prop.getCredentialsFilePath()));
                 InputStream is = new FileInputStream(credentialsFile);
                 credential = GoogleCredential.fromStream(is)
-                        .createScoped(Collections.singleton(DriveScopes.DRIVE));
+                    .createScoped(Collections.singleton(DriveScopes.DRIVE));
             }
         } catch (IOException e) {
-            log.debug(e.getMessage());
-            throw new InputOutputException(e.getMessage());
+            throw new InputOutputException(e.getMessage(), e.getCause());
         }
         return credential;
     }
@@ -61,15 +58,14 @@ public class DriveManager {
     private Drive service() {
         try {
             return new Drive.Builder(
-                    GoogleNetHttpTransport.newTrustedTransport(),
-                    JacksonFactory.getDefaultInstance(), getCredential())
-                    .setApplicationName(driveConfig.getProperty(APP_NAME)).build();
+                GoogleNetHttpTransport.newTrustedTransport(),
+                JacksonFactory.getDefaultInstance(), getCredential())
+                .setApplicationName(prop.getAppName()).build();
         } catch (GeneralSecurityException e) {
-            log.debug(e.getMessage());
-            throw new GeneralSecurityAppException(e.getMessage());
+
+            throw new GeneralSecurityAppException(e.getCause().getMessage(), e.getCause());
         } catch (IOException e) {
-            log.debug(e.getMessage());
-            throw new InputOutputException(e.getMessage());
+            throw new InputOutputException(e.getMessage(), e.getCause());
         }
     }
 
@@ -79,18 +75,18 @@ public class DriveManager {
         try {
             do {
                 FileList result = service().files().list()
-                        .setQ(query)
-                        .setSpaces("drive")
-                        .setFields("nextPageToken, files(id, name)")
-                        .setPageToken(pageToken)
-                        .execute();
+                    .setQ(query)
+                    .setSpaces("drive")
+                    .setFields("nextPageToken, files(id, name)")
+                    .setPageToken(pageToken)
+                    .execute();
 
                 files.addAll(result.getFiles());
                 pageToken = result.getNextPageToken();
             } while (pageToken != null);
         } catch (IOException e) {
-            log.debug(e.getMessage());
-            throw new InputOutputException(e.getMessage());
+
+            throw new InputOutputException(e.getMessage(), e.getCause());
         }
         return files;
     }
@@ -104,8 +100,7 @@ public class DriveManager {
                 return null;
             }
         } catch (IOException e) {
-            log.debug(e.getMessage());
-            throw new InputOutputException(e.getMessage());
+            throw new InputOutputException(e.getCause().getMessage(), e.getCause());
         }
         return file;
     }
@@ -118,13 +113,12 @@ public class DriveManager {
             fileMetadata.setParents(parentFoldersIds);
             FileContent mediaContent = new FileContent(fileType, file);
             uploadedFile = service().files().create(fileMetadata, mediaContent)
-                    .setFields("id, name")
-                    .execute();
-            log.info("Uploaded file with name {} and id {}", uploadedFile.getName(), uploadedFile.getId());
+                .setFields("id, name")
+                .execute();
+            log.trace("Uploaded file with name {} and id {}", uploadedFile.getName(), uploadedFile.getId());
         } catch (IOException e) {
-            String errorMessage = format("Fail uploading file %s because %s", file.getName(), e.getMessage());
-            log.debug(e.getMessage());
-            throw new InputOutputException(errorMessage);
+            String errorMessage = format("Fail uploading file %s because %s", file.getName(), e.getCause().getMessage());
+            throw new InputOutputException(errorMessage, e.getCause());
         }
         return uploadedFile;
     }
@@ -137,12 +131,12 @@ public class DriveManager {
             fileMetadata.setParents(parentFoldersIds);
             fileMetadata.setMimeType(DriveFileType.FOLDER_MIME_TYPE);
             createdFolder = service().files().create(fileMetadata)
-                    .setFields("id, name")
-                    .execute();
-            log.info("Create folder with name {} and id {}", createdFolder.getName(), createdFolder.getId());
+                .setFields("id, name")
+                .execute();
+            log.trace("Create folder with name {} and id {}", createdFolder.getName(), createdFolder.getId());
         } catch (IOException e) {
-            log.debug(e.getMessage());
-            throw new InputOutputException(e.getMessage());
+
+            throw new InputOutputException(e.getCause().getMessage(), e.getCause());
         }
         return createdFolder;
     }
@@ -152,10 +146,9 @@ public class DriveManager {
         try {
             outputStream = new ByteArrayOutputStream();
             service().files().get(fileId).executeMediaAndDownloadTo(outputStream);
-            log.info("Downloaded file with id {}", fileId);
+            log.trace("Downloaded file with id {}", fileId);
         } catch (IOException e) {
-            log.debug(e.getMessage());
-            throw new InputOutputException(e.getMessage());
+            throw new InputOutputException(e.getCause().getMessage(), e.getCause());
         }
         return outputStream.toByteArray();
     }
@@ -163,14 +156,13 @@ public class DriveManager {
     protected void deleteFile(String fileId) {
         try {
             service().files().delete(fileId).execute();
-            log.info("Deleted file with id {}", fileId);
+            log.trace("Deleted file with id {}", fileId);
         } catch (IOException e) {
-            log.debug(e.getMessage());
-            throw new InputOutputException(e.getMessage());
+            throw new InputOutputException(e.getCause().getMessage(), e.getCause());
         }
     }
 
-    public void shareFile(String fileId, String userEmail) {
+    public void shareFile(String fileId, String userEmail, String userRole, String userType) {
         try {
             JsonBatchCallback<Permission> callback = new JsonBatchCallback<Permission>() {
                 @Override
@@ -182,21 +174,21 @@ public class DriveManager {
                 @Override
                 public void onSuccess(Permission permission,
                                       HttpHeaders responseHeaders) {
-                    log.info("Shared file {} with user {}", fileId, userEmail);
+                    log.trace("Shared file {} with user {}", fileId, userEmail);
                 }
             };
             BatchRequest batch = service().batch();
             Permission userPermission = new Permission()
-                    .setType(driveConfig.getProperty(USER_TYPE))
-                    .setRole(driveConfig.getProperty(USER_ROLE))
-                    .setEmailAddress(userEmail);
+                .setType(userRole)
+                .setRole(userType)
+                .setEmailAddress(userEmail);
             service().permissions().create(fileId, userPermission)
-                    .setFields("id")
-                    .queue(batch, callback);
+                .setFields("id")
+                .queue(batch, callback);
             batch.execute();
         } catch (IOException e) {
-            log.debug(e.getMessage());
-            throw new InputOutputException(e.getMessage());
+
+            throw new InputOutputException(e.getCause().getMessage(), e.getCause());
         }
     }
 }

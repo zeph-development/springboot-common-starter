@@ -1,4 +1,2 @@
-# Auto Configure
-
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
- com.csd.starter.drive.autoconfigure.DriveManagerAutoConfiguration
+ com.csd.starter.drive.config.DriveConfig

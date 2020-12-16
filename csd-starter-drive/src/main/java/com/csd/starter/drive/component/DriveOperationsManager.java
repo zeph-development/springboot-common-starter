@@ -50,7 +50,8 @@ public class DriveOperationsManager {
                     .createScoped(Collections.singleton(DriveScopes.DRIVE));
             }
         } catch (IOException e) {
-            throw new InputOutputException(e.getMessage(), e.getCause());
+            throw new InputOutputException(
+                Message(), e.getCause());
         }
         return credential;
     }
@@ -63,7 +64,7 @@ public class DriveOperationsManager {
                 .setApplicationName(prop.getAppName()).build();
         } catch (GeneralSecurityException e) {
 
-            throw new GeneralSecurityAppException(e.getCause().getMessage(), e.getCause());
+            throw new GeneralSecurityAppException(e.getMessage(), e.getCause());
         } catch (IOException e) {
             throw new InputOutputException(e.getMessage(), e.getCause());
         }
@@ -100,8 +101,8 @@ public class DriveOperationsManager {
                 return null;
             }
         } catch (IOException e) {
-            throw new InputOutputException(e.getCause().getMessage(), e.getCause());
-        }
+            throw new InputOutputException(e.getMessage(), e.getCause());
+        }f
         return file;
     }
 
@@ -117,7 +118,7 @@ public class DriveOperationsManager {
                 .execute();
             log.trace("Uploaded file with name {} and id {}", uploadedFile.getName(), uploadedFile.getId());
         } catch (IOException e) {
-            String errorMessage = format("Fail uploading file %s because %s", file.getName(), e.getCause().getMessage());
+            String errorMessage = format("Fail uploading file %s because %s", file.getName(), e.getMessage());
             throw new InputOutputException(errorMessage, e.getCause());
         }
         return uploadedFile;
@@ -136,7 +137,7 @@ public class DriveOperationsManager {
             log.trace("Create folder with name {} and id {}", createdFolder.getName(), createdFolder.getId());
         } catch (IOException e) {
 
-            throw new InputOutputException(e.getCause().getMessage(), e.getCause());
+            throw new InputOutputException(e.getMessage(), e.getCause());
         }
         return createdFolder;
     }
@@ -148,7 +149,7 @@ public class DriveOperationsManager {
             service().files().get(fileId).executeMediaAndDownloadTo(outputStream);
             log.trace("Downloaded file with id {}", fileId);
         } catch (IOException e) {
-            throw new InputOutputException(e.getCause().getMessage(), e.getCause());
+            throw new InputOutputException(e.getMessage(), e.getCause());
         }
         return outputStream.toByteArray();
     }
@@ -158,7 +159,7 @@ public class DriveOperationsManager {
             service().files().delete(fileId).execute();
             log.trace("Deleted file with id {}", fileId);
         } catch (IOException e) {
-            throw new InputOutputException(e.getCause().getMessage(), e.getCause());
+            throw new InputOutputException(e.getMessage(), e.getCause());
         }
     }
 
@@ -188,7 +189,7 @@ public class DriveOperationsManager {
             batch.execute();
         } catch (IOException e) {
 
-            throw new InputOutputException(e.getCause().getMessage(), e.getCause());
+            throw new InputOutputException(e.getMessage(), e.getCause());
         }
     }
 }

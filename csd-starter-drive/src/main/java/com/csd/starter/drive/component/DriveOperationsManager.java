@@ -50,8 +50,7 @@ public class DriveOperationsManager {
                     .createScoped(Collections.singleton(DriveScopes.DRIVE));
             }
         } catch (IOException e) {
-            throw new InputOutputException(
-                Message(), e.getCause());
+            throw new InputOutputException(e.getMessage(), e.getCause());
         }
         return credential;
     }

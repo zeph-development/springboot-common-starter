@@ -91,7 +91,7 @@ public class DriveOperationsManager {
         return files;
     }
 
-    protected File searchFileById(String fileId) {
+    public File searchFileById(String fileId) {
         File file = null;
         try {
             file = service().files().get(fileId).execute();
@@ -105,7 +105,7 @@ public class DriveOperationsManager {
         return file;
     }
 
-    protected File uploadFile(List<String> parentFoldersIds, java.io.File file, String fileType, String fileName) {
+    public File uploadFile(List<String> parentFoldersIds, java.io.File file, String fileType, String fileName) {
         File uploadedFile;
         try {
             File fileMetadata = new File();
@@ -123,7 +123,7 @@ public class DriveOperationsManager {
         return uploadedFile;
     }
 
-    protected File createFolder(List<String> parentFoldersIds, String folderName) {
+    public File createFolder(List<String> parentFoldersIds, String folderName) {
         File createdFolder;
         try {
             File fileMetadata = new File();
@@ -153,7 +153,7 @@ public class DriveOperationsManager {
         return outputStream.toByteArray();
     }
 
-    protected void deleteFile(String fileId) {
+    public void deleteFile(String fileId) {
         try {
             service().files().delete(fileId).execute();
             log.trace("Deleted file with id {}", fileId);
